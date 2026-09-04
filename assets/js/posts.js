@@ -145,7 +145,7 @@ greet('世界');
 
 ## 视频与音频
 
-本站在标准语法之外增加了媒体扩展，详见 [视频与音频嵌入演示](#/article.html?id=media-demo)。
+本站在标准语法之外增加了媒体扩展，详见 [视频与音频嵌入演示](/article.html?id=media-demo)。
 `
   },
   {
