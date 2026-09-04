@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="用户中心">
+  <title>用户中心</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%236366f1'/%3E%3Ccircle cx='50' cy='40' r='14' fill='white'/%3E%3Crect x='36' y='60' width='28' height='12' rx='6' fill='white'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('blog-theme');
+        if (t !== 'dark' && t !== 'light') {
+          t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <main class="user-page">
+    <div id="user-content"></div>
+    <div class="my-comments" id="admin-posts"></div>
+    <div class="my-comments" id="admin-announcements"></div>
+    <div class="my-comments" id="admin-users"></div>
+    <div class="my-comments" id="pending-panel"></div>
+    <div class="my-comments" id="my-comments"></div>
+  </main>
+
+  <div id="site-footer"></div>
+
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/posts.js"></script>
+  <script src="assets/js/markdown.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script>
+    App.initTheme();
+    App.renderHeader('user.html');
+    App.renderFooter();
+    App.initAuth();
+    (function () {
+      document.title = '用户中心 · ' + (SITE.name || '博客');
+      var box = document.getElementById('user-content');
+
+      function fmtJoin(ts) {
+        if (!ts) return '';
+        var d = new Date(ts);
+        if (isNaN(d.getTime())) return '';
+        return d.getFullYear() + ' 年 ' + (d.getMonth() + 1) + ' 月 ' + d.getDate() + ' 日';
+      }
+
+      function fmtTime(t) {
+        if (!t) return '';
+        var d = new Date(t);
+        if (isNaN(d.getTime())) return '';
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+      }
+
+      function postTitle(pid) {
+        var p = (window.POSTS || []).find(function (x) { return x.id === pid; });
+        return p ? p.title : pid;
+      }
+
+      // ---- 管理员文章管理 ----
+      async function renderAdminPosts() {
+        var wrap = document.getElementById('admin-posts');
+        if (!wrap) return;
+        var user = Auth.currentUser();
+        if (!user || !Auth.isAdmin(user)) { wrap.innerHTML = ''; return; }
+
+        var posts = [];
+        try { posts = (await Api.request('GET', '/api/posts')).posts || []; }
+        catch (e) { wrap.innerHTML = '<h2>📝 文章管理</h2><div class="empty">加载失败：' + App.esc(e.message) + '</div>'; return; }
+
+        wrap.innerHTML =
+          '<h2>📝 文章管理</h2>' +
+          '<button class="btn" id="new-post-btn" type="button">＋ 新建文章</button>' +
+          '<form class="post-form" id="post-form" hidden>' +
+            '<label>id（URL 标识，小写英文/数字/短横线）<input id="pf-slug" maxlength="60" placeholder="my-new-post"></label>' +
+            '<label>标题<input id="pf-title"></label>' +
+            '<label>日期（YYYY-MM-DD）<input id="pf-date" placeholder="2025-01-01"></label>' +
+            '<label>分类<input id="pf-category"></label>' +
+            '<label>标签（逗号分隔）<input id="pf-tags" placeholder="技术, 教程"></label>' +
+            '<label>摘要<textarea id="pf-excerpt" rows="2"></textarea></label>' +
+            '<label>正文（Markdown）<textarea id="pf-content" rows="12"></textarea></label>' +
+            '<div class="form-actions">' +
+              '<button class="btn" id="pf-save" type="button">保存</button>' +
+              '<button class="btn btn-ghost" id="pf-cancel" type="button">取消</button>' +
+            '</div>' +
+          '</form>' +
+          '<div class="post-admin-list">' +
+            (posts.length
+              ? posts.map(function (p) {
+                  return '<div class="post-admin-item">' +
+                    '<div class="post-admin-main">' +
+                      '<a class="post-admin-title" href="article.html?id=' + encodeURIComponent(p.id) + '">' + App.esc(p.title) + '</a>' +
+                      '<span class="post-admin-meta">' + App.esc(p.date) + (p.category ? ' · ' + App.esc(p.category) : '') + '</span>' +
+                    '</div>' +
+                    '<div class="post-admin-actions">' +
+                      '<button class="post-edit-btn" type="button" data-id="' + App.esc(p.id) + '">编辑</button>' +
+                      '<button class="post-del-btn" type="button" data-id="' + App.esc(p.id) + '">删除</button>' +
+                    '</div>' +
+                  '</div>';
+                }).join('')
+              : '<p class="muted">暂无文章</p>') +
+          '</div>';
+
+        var form = document.getElementById('post-form');
+
+        function openForm(p) {
+          document.getElementById('pf-slug').value = p ? p.id : '';
+          document.getElementById('pf-title').value = p ? p.title : '';
+          document.getElementById('pf-date').value = p ? p.date : new Date().toISOString().slice(0, 10);
+          document.getElementById('pf-category').value = p ? (p.category || '') : '';
+          document.getElementById('pf-tags').value = p ? (p.tags || []).join(', ') : '';
+          document.getElementById('pf-excerpt').value = p ? (p.excerpt || '') : '';
+          document.getElementById('pf-content').value = p ? (p.content || '') : '';
+          form.hidden = false;
+          if (form.scrollIntoView) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        document.getElementById('new-post-btn').addEventListener('click', function () { openForm(null); });
+        document.getElementById('pf-cancel').addEventListener('click', function () { form.hidden = true; });
+        document.getElementById('pf-save').addEventListener('click', async function () {
+          var payload = {
+            id: document.getElementById('pf-slug').value.trim(),
+            title: document.getElementById('pf-title').value.trim(),
+            date: document.getElementById('pf-date').value.trim(),
+            category: document.getElementById('pf-category').value.trim(),
+            tags: document.getElementById('pf-tags').value,
+            excerpt: document.getElementById('pf-excerpt').value,
+            content: document.getElementById('pf-content').value
+          };
+          try {
+            await Api.request('POST', '/api/posts', payload);
+            alert('已保存');
+            form.hidden = true;
+            renderAdminPosts();
+          } catch (e) { alert(e.message); }
+        });
+
+        wrap.querySelectorAll('.post-edit-btn').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var p = posts.find(function (x) { return x.id === btn.getAttribute('data-id'); });
+            if (p) openForm(p);
+          });
+        });
+        wrap.querySelectorAll('.post-del-btn').forEach(function (btn) {
+          btn.addEventListener('click', async function () {
+            var id = btn.getAttribute('data-id');
+            if (!confirm('确定删除文章「' + id + '」及其评论？')) return;
+            try { await Api.request('DELETE', '/api/posts/' + encodeURIComponent(id)); renderAdminPosts(); }
+            catch (e) { alert(e.message); }
+          });
+        });
+      }
+
+      // ---- 管理员公告管理 ----
+      async function renderAdminAnnouncements() {
+        var wrap = document.getElementById('admin-announcements');
+        if (!wrap) return;
+        var user = Auth.currentUser();
+        if (!user || !Auth.isAdmin(user)) { wrap.innerHTML = ''; return; }
+
+        var anns = [];
+        try { anns = (await Api.request('GET', '/api/announcements')).announcements || []; }
+        catch (e) { wrap.innerHTML = '<h2>📢 公告管理</h2><div class="empty">加载失败：' + App.esc(e.message) + '</div>'; return; }
+
+        wrap.innerHTML =
+          '<h2>📢 公告管理</h2>' +
+          '<button class="btn" id="new-ann-btn" type="button">＋ 新建公告</button>' +
+          '<form class="post-form" id="ann-form" hidden>' +
+            '<input type="hidden" id="ann-id">' +
+            '<label>日期（YYYY-MM-DD）<input id="ann-date" placeholder="2025-01-01"></label>' +
+            '<label>内容<textarea id="ann-text" rows="3"></textarea></label>' +
+            '<div class="form-actions">' +
+              '<button class="btn" id="ann-save" type="button">保存</button>' +
+              '<button class="btn btn-ghost" id="ann-cancel" type="button">取消</button>' +
+            '</div>' +
+          '</form>' +
+          '<div class="post-admin-list">' +
+            (anns.length
+              ? anns.map(function (a) {
+                  return '<div class="post-admin-item">' +
+                    '<div class="post-admin-main">' +
+                      '<div class="post-admin-title">' + App.esc(a.text) + '</div>' +
+                      '<span class="post-admin-meta">' + App.esc(a.date) + '</span>' +
+                    '</div>' +
+                    '<div class="post-admin-actions">' +
+                      '<button class="post-edit-btn ann-edit-btn" type="button" data-id="' + App.esc(a.id) + '">编辑</button>' +
+                      '<button class="post-del-btn ann-del-btn" type="button" data-id="' + App.esc(a.id) + '">删除</button>' +
+                    '</div>' +
+                  '</div>';
+                }).join('')
+              : '<p class="muted">暂无公告</p>') +
+          '</div>';
+
+        var form = document.getElementById('ann-form');
+
+        function openForm(a) {
+          document.getElementById('ann-id').value = a ? a.id : '';
+          document.getElementById('ann-date').value = a ? a.date : new Date().toISOString().slice(0, 10);
+          document.getElementById('ann-text').value = a ? a.text : '';
+          form.hidden = false;
+          if (form.scrollIntoView) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        document.getElementById('new-ann-btn').addEventListener('click', function () { openForm(null); });
+        document.getElementById('ann-cancel').addEventListener('click', function () { form.hidden = true; });
+        document.getElementById('ann-save').addEventListener('click', async function () {
+          var payload = {
+            id: document.getElementById('ann-id').value ? Number(document.getElementById('ann-id').value) : null,
+            date: document.getElementById('ann-date').value.trim(),
+            text: document.getElementById('ann-text').value.trim()
+          };
+          try {
+            await Api.request('POST', '/api/announcements', payload);
+            alert('已保存');
+            form.hidden = true;
+            renderAdminAnnouncements();
+          } catch (e) { alert(e.message); }
+        });
+
+        wrap.querySelectorAll('.ann-edit-btn').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var a = anns.find(function (x) { return String(x.id) === btn.getAttribute('data-id'); });
+            if (a) openForm(a);
+          });
+        });
+        wrap.querySelectorAll('.ann-del-btn').forEach(function (btn) {
+          btn.addEventListener('click', async function () {
+            var id = btn.getAttribute('data-id');
+            if (!confirm('确定删除这条公告？')) return;
+            try { await Api.request('DELETE', '/api/announcements/' + encodeURIComponent(id)); renderAdminAnnouncements(); }
+            catch (e) { alert(e.message); }
+          });
+        });
+      }
+
+      // ---- 管理员账号管理 ----
+      async function renderAdminUsers() {
+        var wrap = document.getElementById('admin-users');
+        if (!wrap) return;
+        var user = Auth.currentUser();
+        if (!user || !Auth.isAdmin(user)) { wrap.innerHTML = ''; return; }
+
+        var users = [];
+        try { users = (await Api.request('GET', '/api/users')).users || []; }
+        catch (e) { wrap.innerHTML = '<h2>👥 账号管理</h2><div class="empty">加载失败：' + App.esc(e.message) + '</div>'; return; }
+
+        wrap.innerHTML =
+          '<h2>👥 账号管理</h2>' +
+          '<div class="post-admin-list">' +
+            (users.length
+              ? users.map(function (u) {
+                  var adminBadge = u.isAdmin ? ' <span class="admin-badge">管理员</span>' : '';
+                  var actions = u.isAdmin
+                    ? ''
+                    : '<button class="post-edit-btn user-reset-btn" type="button" data-account="' + App.esc(u.account) + '">重置密码</button>' +
+                      '<button class="post-del-btn user-del-btn" type="button" data-account="' + App.esc(u.account) + '">删除</button>';
+                  return '<div class="post-admin-item">' +
+                    '<div class="post-admin-main">' +
+                      '<div class="post-admin-title">' + App.esc(u.nickname) + adminBadge + '</div>' +
+                      '<span class="post-admin-meta">@' + App.esc(u.account) + ' · 加入于 ' + App.esc(fmtTime(u.createdAt)) + '</span>' +
+                    '</div>' +
+                    '<div class="post-admin-actions">' + actions + '</div>' +
+                  '</div>';
+                }).join('')
+              : '<p class="muted">暂无账号</p>') +
+          '</div>';
+
+        wrap.querySelectorAll('.user-reset-btn').forEach(function (btn) {
+          btn.addEventListener('click', async function () {
+            var account = btn.getAttribute('data-account');
+            var newPw = prompt('为该账号设置新密码（至少 6 位）：' + account);
+            if (!newPw) return;
+            try {
+              await Api.request('POST', '/api/users/reset-password', { account: account, newPassword: newPw });
+              alert('已重置密码');
+            } catch (e) { alert(e.message); }
+          });
+        });
+        wrap.querySelectorAll('.user-del-btn').forEach(function (btn) {
+          btn.addEventListener('click', async function () {
+            var account = btn.getAttribute('data-account');
+            if (!confirm('确定删除账号「' + account + '」及其所有评论？此操作不可撤销。')) return;
+            try {
+              await Api.request('DELETE', '/api/users/' + encodeURIComponent(account));
+              renderAdminUsers();
+            } catch (e) { alert(e.message); }
+          });
+        });
+      }
+
+      // ---- 管理员审核面板 ----
+      async function renderPending() {
+        var wrap = document.getElementById('pending-panel');
+        if (!wrap) return;
+        var user = Auth.currentUser();
+        if (!user || !Auth.isAdmin(user)) { wrap.innerHTML = ''; return; }
+        var items = [];
+        try { items = (await Api.request('GET', '/api/pending')).comments || []; }
+        catch (e) { wrap.innerHTML = '<h2>✅ 评论审核</h2><div class="empty">加载失败：' + App.esc(e.message) + '</div>'; return; }
+
+        if (!items.length) { wrap.innerHTML = '<h2>✅ 评论审核</h2><p class="muted">暂无待审核的评论。</p>'; return; }
+        var html = '<h2>✅ 评论审核</h2>';
+        html += items.map(function (it) {
+          return '<div class="pending-item">' +
+            '<div class="pending-meta"><a href="article.html?id=' + encodeURIComponent(it.post_id) + '">' + App.esc(postTitle(it.post_id)) + '</a> · 👤 ' + App.esc(it.user) + ' · ' + fmtTime(it.time) + '</div>' +
+            '<div class="pending-content">' + App.esc(it.content) + '</div>' +
+            '<div class="pending-actions">' +
+              '<button class="btn btn-ok" type="button" data-id="' + App.esc(it.id) + '" data-act="approve">通过</button>' +
+              '<button class="btn btn-del" type="button" data-id="' + App.esc(it.id) + '" data-act="reject">删除</button>' +
+            '</div>' +
+          '</div>';
+        }).join('');
+        wrap.innerHTML = html;
+        wrap.querySelectorAll('[data-act]').forEach(function (btn) {
+          btn.addEventListener('click', async function () {
+            var id = btn.getAttribute('data-id');
+            var act = btn.getAttribute('data-act');
+            try {
+              await Api.request('POST', '/api/' + act, { id: id });
+              renderPending();
+              renderMyComments();
+            } catch (e) { alert(e.message); }
+          });
+        });
+      }
+
+      // ---- 我的评论（含回复） ----
+      async function renderMyComments() {
+        var wrap = document.getElementById('my-comments');
+        if (!wrap) return;
+        var user = Auth.currentUser();
+        if (!user) { wrap.innerHTML = ''; return; }
+        var items = [];
+        try { items = (await Api.request('GET', '/api/my-comments')).comments || []; }
+        catch (e) { wrap.innerHTML = '<h2>💬 我的评论</h2><div class="empty">加载失败：' + App.esc(e.message) + '</div>'; return; }
+
+        if (!items.length) { wrap.innerHTML = '<h2>💬 我的评论</h2><div class="empty">你还没有发表过评论，去文章里说两句吧。</div>'; return; }
+        var html = '<h2>💬 我的评论</h2>';
+        html += items.map(function (it) {
+          var statusBadge = it.status === 'pending' ? ' <span class="pending-badge">待审核</span>' : '';
+          var replies = (it.replies || []).map(function (r) {
+            return '<div class="my-reply">' +
+              '<span class="my-reply-name">👤 ' + App.esc(r.user || '匿名') + '</span>：' + App.esc(r.content || '') +
+            '</div>';
+          }).join('');
+          return '<div class="my-comment">' +
+            '<div class="my-comment-head">' +
+              '<a class="my-comment-post" href="article.html?id=' + encodeURIComponent(it.post_id) + '">' + App.esc(postTitle(it.post_id)) + '</a>' + statusBadge +
+              '<time class="my-comment-time">' + fmtTime(it.time) + '</time>' +
+            '</div>' +
+            '<div class="my-comment-content">' + App.esc(it.content || '') + '</div>' +
+            (replies ? '<div class="my-comment-replies">' + replies + '</div>' : '') +
+          '</div>';
+        }).join('');
+        wrap.innerHTML = html;
+      }
+
+      function renderCard() {
+        var user = Auth.currentUser();
+        if (!user) {
+          box.innerHTML =
+            '<div class="user-card">' +
+              '<div class="user-avatar-lg">👤</div>' +
+              '<div class="user-nick">未登录</div>' +
+              '<p class="user-sub">登录后可查看个人中心、修改昵称与密码。</p>' +
+              '<button class="btn" id="u-login" type="button">登录 / 注册</button>' +
+            '</div>';
+          document.getElementById('u-login').addEventListener('click', function () { App.openAuth(); });
+        } else {
+          var admin = Auth.isAdmin(user);
+          var initial = (user.nickname || '?').trim().charAt(0).toUpperCase();
+          box.innerHTML =
+            '<div class="user-card">' +
+              '<div class="user-avatar-lg">' + App.esc(initial) + '</div>' +
+              '<div class="user-nick">' + App.esc(user.nickname) + (admin ? ' <span class="admin-badge">管理员</span>' : '') + '</div>' +
+              '<div class="user-account">@' + App.esc(user.account) + '</div>' +
+              '<div class="user-meta">加入于 ' + App.esc(fmtJoin(user.createdAt)) + '</div>' +
+              '<div class="user-actions">' +
+                '<button class="btn" id="u-chnick" type="button">更改用户名（昵称）</button>' +
+                '<button class="btn" id="u-chpw" type="button">更改密码</button>' +
+                '<button class="btn btn-ghost" id="u-logout" type="button">退出登录</button>' +
+              '</div>' +
+            '</div>';
+          document.getElementById('u-chnick').addEventListener('click', function () { App.openChangeNickname(); });
+          document.getElementById('u-chpw').addEventListener('click', function () { App.openChangePassword(); });
+          document.getElementById('u-logout').addEventListener('click', function () { Auth.logout(); });
+        }
+      }
+
+      function render() {
+        renderCard();
+        renderAdminPosts();
+        renderAdminAnnouncements();
+        renderAdminUsers();
+        renderPending();
+        renderMyComments();
+      }
+
+      document.addEventListener('auth:changed', render);
+      (async function () {
+        await App.loadPosts();  // 先加载文章（含后端文章），再渲染
+        render();
+      })();
+    })();
+  </script>
+</body>
+</html>

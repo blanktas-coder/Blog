@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="博客文章">
+  <title>文章</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%236366f1'/%3E%3Ccircle cx='50' cy='40' r='14' fill='white'/%3E%3Crect x='36' y='60' width='28' height='12' rx='6' fill='white'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('blog-theme');
+        if (t !== 'dark' && t !== 'light') {
+          t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+  <div id="reading-progress"></div>
+  <div id="site-header"></div>
+
+  <main class="article-wrap">
+    <div class="article-header" id="article-header"></div>
+    <div class="article-content" id="article-content"></div>
+    <nav class="article-nav" id="article-nav"></nav>
+
+    <section class="comments" id="comments">
+      <h2>💬 评论 <span class="muted" id="comment-count" style="font-size:16px"></span></h2>
+      <p class="hint">评论保存在当前浏览器的本地存储中，不会上传到服务器。</p>
+
+      <div class="comment-login-gate" id="comment-login-gate">
+        <p>🔒 登录后即可发表评论。</p>
+        <button class="btn" id="comment-login-btn" type="button">登录 / 注册</button>
+      </div>
+
+      <form id="comment-form" style="display:none">
+        <div class="comment-as">以 <strong id="comment-identity">…</strong> 的身份评论</div>
+        <textarea id="comment-content" placeholder="写下你的评论…" required></textarea>
+        <button class="btn" type="submit">发表评论</button>
+      </form>
+      <div id="comment-list"></div>
+    </section>
+  </main>
+
+  <div id="site-footer"></div>
+
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/posts.js"></script>
+  <script src="assets/js/markdown.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/article.js"></script>
+  <script>
+    App.initTheme();
+    App.renderHeader();
+    App.renderFooter();
+    App.initAuth();
+    Article.init();
+  </script>
+</body>
+</html>

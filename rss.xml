@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>空白ark的博客</title>
+    <link>https://blankbk.313001.xyz</link>
+    <description>一个半静态的个人博客：Markdown 写作、标签分类、全文搜索、深色模式、评论与 RSS 订阅。</description>
+    <language>zh-CN</language>
+    <lastBuildDate>Fri, 04 Sep 2026 00:00:00 +0800</lastBuildDate>
+    <atom:link href="https://blankbk.313001.xyz/rss.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>2025 年度书单：那些值得反复读的书</title>
+      <link>https://blankbk.313001.xyz/article.html?id=reading-list-2025</link>
+      <guid isPermaLink="true">https://blankbk.313001.xyz/article.html?id=reading-list-2025</guid>
+      <pubDate>Sun, 02 Feb 2025 00:00:00 +0800</pubDate>
+      <description>整理过去一年读过的书，挑出几本真正改变我思维方式的作品，附一句话推荐理由。</description>
+<category>阅读</category><category>生活</category>
+    </item>
+    <item>
+      <title>从零写一个轻量 Markdown 解析器</title>
+      <link>https://blankbk.313001.xyz/article.html?id=build-markdown-parser</link>
+      <guid isPermaLink="true">https://blankbk.313001.xyz/article.html?id=build-markdown-parser</guid>
+      <pubDate>Sat, 18 Jan 2025 00:00:00 +0800</pubDate>
+      <description>不依赖任何库，用 JavaScript 手写一个够用的 Markdown 解析器：从围栏代码块提取到行内语法，思路与代码全记录。</description>
+<category>技术</category><category>JavaScript</category>
+    </item>
+    <item>
+      <title>视频与音频嵌入演示</title>
+      <link>https://blankbk.313001.xyz/article.html?id=media-demo</link>
+      <guid isPermaLink="true">https://blankbk.313001.xyz/article.html?id=media-demo</guid>
+      <pubDate>Fri, 10 Jan 2025 00:00:00 +0800</pubDate>
+      <description>演示如何在文章里嵌入视频和音频：使用 @[video](url) / @[audio](url) 快捷语法，或直接写原生 HTML 标签。</description>
+<category>演示</category><category>多媒体</category>
+    </item>
+    <item>
+      <title>Markdown 写作指南：本站支持的语法</title>
+      <link>https://blankbk.313001.xyz/article.html?id=markdown-guide</link>
+      <guid isPermaLink="true">https://blankbk.313001.xyz/article.html?id=markdown-guide</guid>
+      <pubDate>Sun, 05 Jan 2025 00:00:00 +0800</pubDate>
+      <description>一篇完整的 Markdown 语法速查，覆盖标题、列表、表格、代码块、引用、链接、图片等本站支持的写法。</description>
+<category>教程</category><category>Markdown</category>
+    </item>
+    <item>
+      <title>你好，世界 —— 欢迎来到我的博客</title>
+      <link>https://blankbk.313001.xyz/article.html?id=hello-world</link>
+      <guid isPermaLink="true">https://blankbk.313001.xyz/article.html?id=hello-world</guid>
+      <pubDate>Wed, 01 Jan 2025 00:00:00 +0800</pubDate>
+      <description>这是一篇开站文章，介绍这个博客的由来、技术选型和功能特性。</description>
+<category>随笔</category>
+    </item>
+  </channel>
+</rss>

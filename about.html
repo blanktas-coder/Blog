@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="关于本站">
+  <title>关于</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%236366f1'/%3E%3Ccircle cx='50' cy='40' r='14' fill='white'/%3E%3Crect x='36' y='60' width='28' height='12' rx='6' fill='white'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('blog-theme');
+        if (t !== 'dark' && t !== 'light') {
+          t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <main class="about-card">
+    <div class="article-content">
+      <h1>关于本站</h1>
+      <p id="about-intro">你好，我是 <strong id="about-author">博主</strong>，欢迎来到「<strong id="about-name">我的博客</strong>」。</p>
+      <p>这里是我记录思考、分享技术笔记与生活随想的地方。站点前端由原生 HTML/CSS/JavaScript 构建，可部署到 GitHub Pages；注册登录、评论与文章管理由一个轻量后端（Node.js + SQLite）提供。</p>
+
+      <h2>功能特性</h2>
+      <ul>
+        <li>Markdown 写作与代码高亮（自研轻量解析器）</li>
+        <li>标签 / 分类浏览（点选筛选，再点一次取消）</li>
+        <li>站内全文搜索</li>
+        <li>深色模式（自动跟随系统 + 右侧悬浮球手动切换）</li>
+        <li>首屏封面 + 公告气泡</li>
+        <li>用户系统（账户登录 + 昵称分离，头像菜单，用户中心）</li>
+        <li>评论 / 回复（<strong>管理员审核后发布</strong>，全站共享）</li>
+        <li>管理员可发布、编辑、删除文章</li>
+        <li>RSS 订阅（rss.xml）</li>
+        <li>文章内嵌视频 / 音频</li>
+      </ul>
+
+      <h2>如何开始写作</h2>
+      <p>登录管理员账号后，进入「用户中心 → 文章管理」，即可<strong>新建、编辑、删除文章</strong>（正文用 Markdown）。详细的 Markdown 语法见 <a href="article.html?id=markdown-guide">Markdown 写作指南</a>。</p>
+
+      <h2>联系我</h2>
+      <p>可以在文章下方留言（审核通过后显示），或通过 RSS 订阅本站更新。</p>
+    </div>
+  </main>
+
+  <div id="site-footer"></div>
+
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/posts.js"></script>
+  <script src="assets/js/markdown.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script>
+    App.initTheme();
+    App.renderHeader('about.html');
+    App.renderFooter();
+    App.initAuth();
+    (function () {
+      var author = document.getElementById('about-author');
+      var name = document.getElementById('about-name');
+      if (author) author.textContent = SITE.author || SITE.name || '博主';
+      if (name) name.textContent = SITE.name || '我的博客';
+      document.title = '关于 · ' + (SITE.name || '博客');
+    })();
+  </script>
+</body>
+</html>
